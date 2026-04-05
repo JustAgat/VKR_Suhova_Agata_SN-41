@@ -45,7 +45,7 @@ pip install -r requirements.txt
 
 1. Создай файл `.env` в корне проекта:
 ```bash
-cp .env.example .env  # если существует пример
+cp .env.example .env  # в корне репозитория лежит пример
 ```
 
 2. Отредактируй `.env` с актуальными данными:
@@ -68,7 +68,7 @@ DB_NAME=db_name
 psql -U postgres
 
 # Создай БД
-CREATE DATABASE vkr_agata;
+CREATE DATABASE db_name;
 
 # Выход
 \q
@@ -78,8 +78,10 @@ CREATE DATABASE vkr_agata;
 
 ## Шаг 6: Применить миграции
 
+Создайте новую миграцию и примените
 ```bash
-flask db upgrade
+python manage.py db migrate -m "Initial migration"
+python manage.py db upgrade
 ```
 
 Это создаст все необходимые таблицы в БД.

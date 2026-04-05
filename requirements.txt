@@ -10,6 +10,7 @@ psycopg2-binary==2.9.11
 # === Database Migrations ===
 Flask-Migrate==4.1.0
 Alembic==1.18.4
+Flask-Script==2.0.6
 
 # === Utilities ===
 python-dotenv==1.2.2
