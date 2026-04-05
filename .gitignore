@@ -1,0 +1,150 @@
+# === Environment & Configuration ===
+# Окружение и конфиги с чувствительными данными
+.env
+.env.local
+.env.*.local
+.env.production
+config.local.py
+
+# Python virtual environment
+venv/
+env/
+ENV/
+dev_env/
+.venv
+.python-version
+
+# === Python ===
+# Кэш файлы
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# === IDE & Editor ===
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+venv.xml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# General editors
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# === Database ===
+# База данных
+*.db
+*.sqlite
+*.sqlite3
+database.db
+
+# PostgreSQL
+*.pg_dump
+*.sql.gz
+
+# === Logs ===
+# Логи
+*.log
+logs/
+*.pid
+
+# === OS ===
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.trash/
+
+# === Project specific ===
+# Миграции (опционально, если используешь)
+migrations/versions/
+# migrations/versions/  # <- раскомментировать если не хочешь версионировать миграции
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+.temp/
+
+# Backup файлы
+*.bak
+*.backup
+*.old
+
+# === Testing ===
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# === Dependencies ===
+# Зависимости (если используешь lock файлы)
+poetry.lock
+pipfile.lock
+
+# === IDE caches ===
+.cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# === Secure files (дополнительно) ===
+# Сертификаты и ключи
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+secrets.json
+config/secrets.yaml
+
+# === Node if used ===
+node_modules/
+npm-debug.log
+yarn-error.log
