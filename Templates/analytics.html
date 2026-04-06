@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель аналитики | Астра</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/analytics.css">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="flex h-screen">
+        <!-- Боковое меню -->
+        <div class="w-64 bg-gray-800 p-6 shadow-lg">
+            <h2 class="text-2xl font-bold mb-8 text-cyan-400">Аналитика</h2>
+            <nav class="space-y-2">
+                <a class="nav-item active block px-4 py-2 rounded hover:bg-gray-700" data-view="overview" onclick="changeView('overview')">📊 Обзор</a>
+                <a class="nav-item block px-4 py-2 rounded hover:bg-gray-700" data-view="heatmap" onclick="changeView('heatmap')">🔥 Тепловая карта</a>
+                <a class="nav-item block px-4 py-2 rounded hover:bg-gray-700" data-view="sessions" onclick="changeView('sessions')">👥 Сессии</a>
+            </nav>
+        </div>
+
+        <!-- Основное содержимое -->
+        <div class="flex-1 overflow-auto p-6">
+            <!-- ===== OVERVIEW ===== -->
+            <div data-view-content="overview" style="display: block;">
+                <!-- Заголовок -->
+                <div class="mb-8">
+                    <h1 class="text-4xl font-bold">Обзор аналитики</h1>
+                    <p class="text-gray-400 mt-2">Статистика по последним <span id="period-days">7</span> дням</p>
+                </div>
+
+                <!-- Выбор периода -->
+                <div class="mb-8 flex gap-2">
+                    <button onclick="changePeriod(7)" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">7 дней</button>
+                    <button onclick="changePeriod(30)" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">30 дней</button>
+                    <button onclick="changePeriod(90)" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">90 дней</button>
+                </div>
+
+                <!-- Основные метрики -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    <div class="card metric">
+                        <div class="metric-value" id="sessions-count">-</div>
+                        <div class="metric-label">Сессий</div>
+                    </div>
+                    <div class="card metric">
+                        <div class="metric-value" id="visitors-count">-</div>
+                        <div class="metric-label">Визиторов</div>
+                    </div>
+                    <div class="card metric">
+                        <div class="metric-value" id="events-count">-</div>
+                        <div class="metric-label">События</div>
+                    </div>
+                    <div class="card metric">
+                        <div class="metric-value" id="bounce-rate">-</div>
+                        <div class="metric-label">Bounce Rate %</div>
+                    </div>
+                    <div class="card metric">
+                        <div class="metric-value" id="avg-duration">-</div>
+                        <div class="metric-label">Сред. длит. сек</div>
+                    </div>
+                </div>
+
+                <!-- Графики -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">Сессии по дням</h3>
+                        <div class="chart-container">
+                            <canvas id="timeline-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">Распределение по устройствам</h3>
+                        <div class="chart-container">
+                            <canvas id="devices-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">Топ секции</h3>
+                        <div class="chart-container">
+                            <canvas id="sections-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-bold mb-4">Источники (UTM)</h3>
+                        <div class="chart-container">
+                            <canvas id="utm-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card lg:col-span-2">
+                        <h3 class="text-xl font-bold mb-4">Типы событий</h3>
+                        <div class="chart-container">
+                            <canvas id="events-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Последние сессии -->
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Последние сессии</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-600">
+                                    <th class="text-left py-2 px-2">Устройство</th>
+                                    <th class="text-left py-2 px-2">Страницы</th>
+                                    <th class="text-left py-2 px-2">Время (сек)</th>
+                                    <th class="text-left py-2 px-2">Bounce</th>
+                                    <th class="text-left py-2 px-2">Источник</th>
+                                    <th class="text-left py-2 px-2">Время</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessions-table">
+                                <tr><td colspan="6" class="py-4 text-center text-gray-500">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== HEATMAP ===== -->
+            <div data-view-content="heatmap" style="display: none;">
+                <div class="mb-8">
+                    <h1 class="text-4xl font-bold">Тепловая карта секций</h1>
+                    <p class="text-gray-400 mt-2">Статистика по последним <span id="period-days-hm">7</span> дням</p>
+                </div>
+
+                <div class="mb-8 flex gap-2">
+                    <button onclick="changePeriod(7)" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">7 дней</button>
+                    <button onclick="changePeriod(30)" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">30 дней</button>
+                    <button onclick="changePeriod(90)" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">90 дней</button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card lg:col-span-2">
+                        <h3 class="text-xl font-bold mb-4">Просмотры vs Конверсии по секциям</h3>
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="heatmap-chart"></canvas>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Размер пузыря = кол-во просмотров | Высота = % конверсии</p>
+                    </div>
+
+                    <div class="card lg:col-span-2">
+                        <h3 class="text-xl font-bold mb-4">Детали по секциям</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-600">
+                                        <th class="text-left py-2 px-2">Секция</th>
+                                        <th class="text-left py-2 px-2">Просмотры</th>
+                                        <th class="text-left py-2 px-2">Конверсии</th>
+                                        <th class="text-left py-2 px-2">Тип.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="heatmap-table">
+                                    <tr><td colspan="4" class="py-4 text-center text-gray-500">Загрузка...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== SESSIONS ===== -->
+            <div data-view-content="sessions" style="display: none;">
+                <div class="mb-8">
+                    <h1 class="text-4xl font-bold">Поиск сессий</h1>
+                    <p class="text-gray-400 mt-2">Фильтруйте сессии по различным критериям</p>
+                </div>
+
+                <!-- Фильтры -->
+                <div class="card mb-8">
+                    <h3 class="text-xl font-bold mb-4">Фильтры</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Устройство</label>
+                            <select id="filter-device" class="w-full bg-gray-700 rounded px-3 py-2" onchange="loadSessionsData()">
+                                <option value="all">Все</option>
+                                <option value="desktop">Desktop</option>
+                                <option value="mobile">Mobile</option>
+                                <option value="tablet">Tablet</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Источник UTM</label>
+                            <select id="filter-utm" class="w-full bg-gray-700 rounded px-3 py-2" onchange="loadSessionsData()">
+                                <option value="all">Все</option>
+                                <option value="google">Google</option>
+                                <option value="yandex">Yandex</option>
+                                <option value="direct">Direct</option>
+                                <option value="social">Social</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Bounce Status</label>
+                            <select id="filter-bounce" class="w-full bg-gray-700 rounded px-3 py-2" onchange="loadSessionsData()">
+                                <option value="all">Все</option>
+                                <option value="true">Bounce</option>
+                                <option value="false">Conv</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Мин. длительность (сек)</label>
+                            <input type="number" id="filter-duration" min="0" class="w-full bg-gray-700 rounded px-3 py-2" onchange="loadSessionsData()" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Таблица сессий -->
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Результаты поиска</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-600">
+                                    <th class="text-left py-2 px-2">ID</th>
+                                    <th class="text-left py-2 px-2">Устройство</th>
+                                    <th class="text-left py-2 px-2">Страницы</th>
+                                    <th class="text-left py-2 px-2">Время</th>
+                                    <th class="text-left py-2 px-2">Статус</th>
+                                    <th class="text-left py-2 px-2">Источник</th>
+                                    <th class="text-left py-2 px-2">Начало</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filtered-sessions-table">
+                                <tr><td colspan="7" class="py-4 text-center text-gray-500">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно деталей сессии -->
+    <div id="session-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" style="display: none;" onclick="if (event.target.id === 'session-modal') closeModal()">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Деталь сессии</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/analytics.js"></script>
+</body>
+</html>

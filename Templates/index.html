@@ -6,18 +6,15 @@
     <title>Цифровой офис Астра | Битрикс24</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .hero-bg { background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2070') center/cover no-repeat; }
-        .section-header { position: relative; }
-        .section-header::after { content: ''; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); width: 60px; height: 3px; background: #e30613; border-radius: 9999px; }
-    </style>
+    <link rel="stylesheet" href="/static/css/index.css">
 </head>
 <body class="bg-white text-gray-900">
 
     <!-- HERO -->
-    <section id="hero" class="hero-bg min-h-screen flex items-center text-white">
+    <section id="hero" 
+             data-track="section" 
+             data-track-name="hero"
+             class="hero-bg min-h-screen flex items-center text-white">
         <div class="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
             <div class="space-y-8">
                 <h1 class="text-5xl md:text-6xl font-bold leading-tight">
@@ -32,13 +29,17 @@
 
                 <div class="flex flex-wrap gap-4">
                     <a href="#booking-form" 
-                       onclick="trackClick('hero_cta')"
+                       data-track="click"
+                       data-track-event="cta_click"
+                       data-track-name="hero_cta"
                        class="bg-red-600 hover:bg-red-700 transition px-10 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-3">
                         <i class="fa-solid fa-calendar"></i>
                         Записаться на экскурсию
                     </a>
                     <a href="#about-us" 
-                       onclick="trackClick('history_cta')"
+                       data-track="click"
+                       data-track-event="cta_click"
+                       data-track-name="history_cta"
                        class="border-2 border-white hover:bg-white hover:text-gray-900 transition px-10 py-4 rounded-xl font-semibold text-lg">
                         Узнать нашу историю
                     </a>
@@ -55,14 +56,21 @@
     </section>
 
     <!-- ФОРМА ЗАПИСИ -->
-    <section id="booking-form" class="py-24 bg-gray-50">
+    <section id="booking-form" 
+             data-track="section" 
+             data-track-name="booking_form"
+             class="py-24 bg-gray-50">
         <div class="max-w-4xl mx-auto px-6">
             <div class="text-center mb-12">
                 <h2 class="text-4xl font-bold mb-4">Записаться на экскурсию по нашему цифровому офису</h2>
                 <p class="text-xl text-gray-600">Выберите удобное время, и мы проведём для вас персональную экскурсию</p>
             </div>
 
-            <form id="excursionForm" class="bg-white rounded-3xl shadow-xl p-10 md:p-16 space-y-8">
+            <form id="excursionForm" 
+                  data-track="form"
+                  data-track-event="form_submit"
+                  data-track-name="excursion_booking"
+                  class="bg-white rounded-3xl shadow-xl p-10 md:p-16 space-y-8">
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium mb-2">Ваше имя</label>
@@ -110,7 +118,10 @@
     </section>
 
     <!-- РАССКАЖЕМ ПРО НАС -->
-    <section id="about-us" class="py-24">
+    <section id="about-us" 
+             data-track="section" 
+             data-track-name="about_us"
+             class="py-24">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
             <div>
                 <img src="https://images.unsplash.com/photo-1552581234-26160a608093?q=80&w=2070" 
@@ -136,7 +147,10 @@
     </section>
 
     <!-- ХАОС ГИБРИДНОЙ РАБОТЫ -->
-    <section id="challenges" class="py-24 bg-gray-50">
+    <section id="challenges" 
+             data-track="section" 
+             data-track-name="challenges"
+             class="py-24 bg-gray-50">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-4xl font-bold text-center mb-6">С чем мы столкнулись: хаос гибридной работы</h2>
             <p class="text-center text-xl text-gray-600 max-w-2xl mx-auto mb-16">
@@ -165,7 +179,10 @@
     </section>
 
     <!-- МЫ ПОСТРОИЛИ -->
-    <section id="our-solution" class="py-24">
+    <section id="our-solution" 
+             data-track="section" 
+             data-track-name="our_solution"
+             class="py-24">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-4xl font-bold text-center mb-4">Мы построили цифровой офис для своей команды</h2>
             <p class="text-center text-xl text-gray-600 mb-16">Мы взяли Битрикс24 и сфокусировались не на кнопках, а на людях и процессах.</p>
@@ -196,7 +213,10 @@
     </section>
 
     <!-- ИЗ НАШЕГО ОПЫТА -->
-    <section id="effectiveness" class="py-24 bg-gray-900 text-white">
+    <section id="effectiveness" 
+             data-track="section" 
+             data-track-name="effectiveness"
+             class="py-24 bg-gray-900 text-white">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
             <div>
                 <h2 class="text-4xl font-bold mb-12">Из нашего опыта — в вашу эффективность</h2>
@@ -240,7 +260,10 @@
     </section>
 
     <!-- ТАРИФЫ -->
-    <section id="tariffs" class="py-24">
+    <section id="tariffs" 
+             data-track="section" 
+             data-track-name="tariffs"
+             class="py-24">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-4xl font-bold text-center mb-4">Решения под любой этап развития бизнеса</h2>
             <p class="text-center text-xl text-gray-600 mb-16">Запускайте портал, автоматизируйте процессы и развивайте корпоративную культуру</p>
@@ -255,7 +278,11 @@
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Быстрый старт: единое пространство для задач и документов</li>
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Коммуникация и внутренняя жизнь</li>
                     </ul>
-                    <a href="#" onclick="trackClick('tariff_base')" class="block text-center border border-gray-300 group-hover:border-red-600 group-hover:text-red-600 transition py-4 rounded-2xl font-medium">Выбрать Базовый</a>
+                    <a href="#" 
+                       data-track="click"
+                       data-track-event="tariff_click"
+                       data-track-name="tariff_base"
+                       class="block text-center border border-gray-300 group-hover:border-red-600 group-hover:text-red-600 transition py-4 rounded-2xl font-medium">Выбрать Базовый</a>
                 </div>
 
                 <!-- Стандартный -->
@@ -268,7 +295,11 @@
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Оптимизация бизнес-процессов</li>
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Корпоративная структура 2.0</li>
                     </ul>
-                    <a href="#" onclick="trackClick('tariff_standard')" class="block text-center bg-red-600 text-white py-4 rounded-2xl font-medium">Выбрать Стандартный</a>
+                    <a href="#" 
+                       data-track="click"
+                       data-track-event="tariff_click"
+                       data-track-name="tariff_standard"
+                       class="block text-center bg-red-600 text-white py-4 rounded-2xl font-medium">Выбрать Стандартный</a>
                 </div>
 
                 <!-- Продвинутый -->
@@ -280,7 +311,11 @@
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Комплексная цифровая трансформация</li>
                         <li class="flex items-start gap-3"><i class="fa-solid fa-check text-green-500 mt-1"></i> Премиум-онбординг</li>
                     </ul>
-                    <a href="#" onclick="trackClick('tariff_advanced')" class="block text-center border border-gray-300 group-hover:border-red-600 group-hover:text-red-600 transition py-4 rounded-2xl font-medium">Выбрать Продвинутый</a>
+                    <a href="#" 
+                       data-track="click"
+                       data-track-event="tariff_click"
+                       data-track-name="tariff_advanced"
+                       class="block text-center border border-gray-300 group-hover:border-red-600 group-hover:text-red-600 transition py-4 rounded-2xl font-medium">Выбрать Продвинутый</a>
                 </div>
             </div>
         </div>
@@ -291,7 +326,9 @@
         <div class="max-w-7xl mx-auto px-6 text-center">
             <p class="text-3xl font-light mb-8">Готовы увидеть, как может работать ваш цифровой офис?</p>
             <a href="#booking-form" 
-               onclick="trackClick('footer_cta')"
+               data-track="click"
+               data-track-event="cta_click"
+               data-track-name="footer_cta"
                class="inline-block bg-red-600 hover:bg-red-700 px-16 py-6 rounded-2xl text-2xl font-semibold transition">
                 Записаться на экскурсию →
             </a>
@@ -302,19 +339,6 @@
         </div>
     </footer>
 
-    <!-- TRACKING SCRIPT -->
-    <script>
-        // === Tailwind config (только конфиги) ===
-        tailwind.config = {
-            content: [],
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-    <!-- Подключаем основной трекинг скрипт -->
-    <script src="/static/css/js/tracking.js"></script>
+    <script src="/static/js/tracking-main.js" data-auto-init></script>
 </body>
 </html>
