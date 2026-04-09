@@ -22,9 +22,35 @@ function changeView(view) {
 function changePeriod(days) {
     currentPeriod = days;
     document.getElementById('period-days').innerText = days;
+    
+    // Обновить подсвечивание кнопок периода
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+        btn.classList.add('bg-gray-300', 'text-gray-900', 'hover:bg-gray-400');
+    });
+    document.querySelectorAll('.period-btn-hm').forEach(btn => {
+        btn.classList.remove('bg-red-600', 'text-white', 'hover:bg-red-700');
+        btn.classList.add('bg-gray-300', 'text-gray-900', 'hover:bg-gray-400');
+    });
+    
+    // Подсветить активную кнопку
+    const activeBtnOverview = document.getElementById(`period-${days}`);
+    const activeBtnHeatmap = document.getElementById(`period-${days}-hm`);
+    
+    if (activeBtnOverview) {
+        activeBtnOverview.classList.remove('bg-gray-300', 'text-gray-900', 'hover:bg-gray-400');
+        activeBtnOverview.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+    }
+    if (activeBtnHeatmap) {
+        activeBtnHeatmap.classList.remove('bg-gray-300', 'text-gray-900', 'hover:bg-gray-400');
+        activeBtnHeatmap.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+    }
+    
+    // Обновить данные в зависимости от текущего view
     if (currentView === 'overview') {
         loadData();
     } else if (currentView === 'heatmap') {
+        document.getElementById('period-days-hm').innerText = days;
         loadHeatmap();
     }
 }
@@ -114,42 +140,97 @@ async function loadHeatmap() {
     try {
         const heatmap = await fetch(`/api/analytics/heatmap?days=${currentPeriod}`).then(r => r.json());
         
-        const conversionRate = heatmap.sections.map((_, i) => {
-            const views = heatmap.views[i];
-            const conversions = heatmap.conversions[i];
-            return views > 0 ? Math.round((conversions / views) * 100) : 0;
-        });
+        // Найти максимум кликов для нормализации
+        const maxClicks = Math.max(...heatmap.conversions, 1);
         
-        drawChart('heatmap-chart', 'bubble', {
-            labels: heatmap.sections,
-            datasets: [{
-                label: 'Секции (размер = просмотры, Y = конверсия)',
-                data: heatmap.sections.map((section, i) => ({
-                    x: i,
-                    y: conversionRate[i],
-                    r: Math.sqrt(heatmap.views[i]) / 2
-                })),
-                backgroundColor: heatmap.sections.map((_, i) => {
-                    const rate = conversionRate[i];
-                    if (rate > 50) return '#4ecdc4';
-                    if (rate > 20) return '#f7b731';
-                    return '#ff6b6b';
-                })
-            }]
-        }, false, true);
+        // Позиции секций на странице (в процентах от общей высоты)
+        const sectionPositions = {
+            'hero': { top: 0, height: 25 },
+            'booking_form': { top: 25, height: 20 },
+            'about_us': { top: 45, height: 15 },
+            'challenges': { top: 60, height: 15 },
+            'our_solution': { top: 75, height: 10 },
+            'effectiveness': { top: 85, height: 8 },
+            'tariffs': { top: 93, height: 7 }
+        };
         
+        // Генерировать тепловой слой
+        const heatmapPreview = document.getElementById('heatmap-preview');
+        heatmapPreview.innerHTML = heatmap.sections.map((section, i) => {
+            const clicks = heatmap.conversions[i];
+            const intensity = clicks / maxClicks; // 0-1
+            
+            // Цвет на основе интенсивности
+            const opacity = Math.max(0.15, intensity);
+            const bgColor = `rgba(220, 38, 38, ${opacity})`;
+            
+            const pos = sectionPositions[section] || { top: i * 15, height: 15 };
+            
+            return `
+                <div style="
+                    position: absolute;
+                    top: ${pos.top}%;
+                    left: 0;
+                    width: 100%;
+                    height: ${pos.height}%;
+                    background: ${bgColor};
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                    border-bottom: 1px solid rgba(0,0,0,0.1);
+                    transition: background 0.3s ease;
+                " 
+                class="heatmap-section"
+                title="Секция: ${section}&#10;Клики: ${clicks}">
+                    <div class="text-center">
+                        <div class="text-lg font-bold capitalize">${section.replace('_', ' ')}</div>
+                        <div class="text-sm">Клики: ${clicks}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Заполнить таблицу
         const heatmapTable = document.getElementById('heatmap-table');
-        heatmapTable.innerHTML = heatmap.sections.map((section, i) => `
-            <tr class="border-b border-gray-700">
-                <td class="py-2 px-2">${section}</td>
-                <td class="py-2 px-2">${heatmap.views[i]}</td>
-                <td class="py-2 px-2">${heatmap.conversions[i]}</td>
-                <td class="py-2 px-2"><span class="inline-block px-2 py-1 rounded ${conversionRate[i] > 50 ? 'bg-green-900' : conversionRate[i] > 20 ? 'bg-yellow-900' : 'bg-red-900'}">${conversionRate[i]}%</span></td>
-            </tr>
-        `).join('');
+        heatmapTable.innerHTML = heatmap.sections.map((section, i) => {
+            const views = heatmap.views[i];
+            const clicks = heatmap.conversions[i];
+            const ctr = views > 0 ? Math.round((clicks / views) * 100) : 0;
+            const intensity = clicks / maxClicks;
+            
+            let intensityBar = getIntensityBar(intensity);
+            
+            return `
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="py-3 px-4 capitalize font-medium text-gray-900">${section.replace('_', ' ')}</td>
+                    <td class="py-3 px-4 text-gray-700">${views}</td>
+                    <td class="py-3 px-4 font-bold text-red-600">${clicks}</td>
+                    <td class="py-3 px-4 font-semibold text-gray-900">${ctr}%</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <div style="width: 120px; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+                                <div style="width: ${intensity * 100}%; height: 100%; background: linear-gradient(90deg, #fca5a5, #dc2626); transition: width 0.3s ease;"></div>
+                            </div>
+                            <span class="text-sm text-gray-600 w-12">${Math.round(intensity * 100)}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
     } catch (error) {
         console.error('Error loading heatmap:', error);
     }
+}
+
+function getIntensityBar(intensity) {
+    if (intensity > 0.75) return '████████████████ Очень высокая';
+    if (intensity > 0.5) return '████████████░░░░ Высокая';
+    if (intensity > 0.25) return '████████░░░░░░░░ Средняя';
+    return '████░░░░░░░░░░░░ Низкая';
 }
 
 async function loadSessionsData() {
@@ -276,3 +357,7 @@ function drawChart(canvasId, type, data, indexAxis = false, isBubble = false) {
 
 // Загрузить данные при загрузке страницы
 changeView('overview');
+
+// Инициализировать подсвечивание кнопок периода
+document.getElementById('period-7').classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');
+document.getElementById('period-7-hm').classList.add('bg-red-600', 'text-white', 'hover:bg-red-700');

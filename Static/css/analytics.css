@@ -1,8 +1,10 @@
-/* Dark theme with cyan accent */
+/* Light theme (matching index.html) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 body {
-    background: #0f172a;
-    color: #e2e8f0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f8f9fa;
+    color: #1f2937;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Sidebar Navigation */
@@ -10,33 +12,35 @@ body {
     transition: all 0.2s ease;
     cursor: pointer;
     font-weight: 500;
-    color: #cbd5e1;
+    color: #4b5563;
 }
 
 .nav-item:hover {
-    background-color: rgba(0, 217, 255, 0.1) !important;
-    color: #00d9ff;
+    background-color: rgba(227, 6, 19, 0.08) !important;
+    color: #e30613;
 }
 
 .nav-item.active {
-    background-color: rgba(0, 217, 255, 0.2) !important;
-    color: #00d9ff;
-    border-left: 3px solid #00d9ff;
+    background-color: rgba(227, 6, 19, 0.12) !important;
+    color: #e30613;
+    border-left: 3px solid #e30613;
 }
 
 /* Card styling */
 .card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 20px;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
-    border-color: #475569;
-    box-shadow: 0 10px 25px rgba(0, 217, 255, 0.08);
+    border-color: #d1d5db;
+    box-shadow: 0 4px 12px rgba(227, 6, 19, 0.08);
 }
+
 
 /* Metrics */
 .metric {
@@ -47,13 +51,13 @@ body {
 .metric-value {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #00d9ff;
+    color: #e30613;
     margin-bottom: 8px;
 }
 
 .metric-label {
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -71,32 +75,33 @@ table {
 }
 
 thead tr {
-    background-color: rgba(0, 217, 255, 0.05);
+    background-color: #f3f4f6;
 }
 
 thead th {
-    color: #00d9ff;
+    color: #e30613;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
-    border-bottom: 2px solid #00d9ff;
+    border-bottom: 2px solid #e30613;
+    color: #1f2937;
 }
 
 tbody tr {
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid #f0f0f0;
     transition: background-color 0.2s ease;
 }
 
 tbody tr:hover {
-    background-color: rgba(0, 217, 255, 0.05);
+    background-color: #fafafa;
 }
 
 /* Input fields & Select */
 input, select {
-    background-color: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #334155;
+    background-color: #ffffff;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
     border-radius: 6px;
     padding: 8px 12px;
     transition: all 0.2s ease;
@@ -105,12 +110,12 @@ input, select {
 
 input:focus, select:focus {
     outline: none;
-    border-color: #00d9ff;
-    box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.1);
+    border-color: #e30613;
+    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.1);
 }
 
 input::placeholder {
-    color: #64748b;
+    color: #9ca3af;
 }
 
 /* Modal */
@@ -138,7 +143,7 @@ button {
 
 button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(227, 6, 19, 0.15);
 }
 
 button:active {
@@ -152,15 +157,25 @@ button:active {
 }
 
 ::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: #f0f0f0;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #475569;
+    background: #d1d5db;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+    background: #9ca3af;
+}
+
+/* Heatmap Cards */
+.heatmap-card {
+    transition: all 0.3s ease;
+}
+
+.heatmap-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(220, 38, 38, 0.15);
 }
 
