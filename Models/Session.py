@@ -7,6 +7,8 @@ class Session(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     session_id = db.Column(db.UUID, unique=True, nullable=False, default=uuid.uuid4)
     visitor_id = db.Column(db.UUID, db.ForeignKey('visitors.id'), nullable=False)
+    site_id = db.Column(db.UUID, db.ForeignKey('sites.id'), nullable=True)
+    revision_id = db.Column(db.UUID, db.ForeignKey('revisions.id'), nullable=True)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ended_at = db.Column(db.DateTime)
     duration_sec = db.Column(db.Integer)

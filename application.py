@@ -16,7 +16,7 @@ api = Api(app)
 migrate = Migrate(app, db)
 
 # Импорт моделей после инициализации db для избежания циклических импортов
-from Models import Event, Visitor, Session
+from Models import Event, Visitor, Session, User, Site, Revision
 # Для русского языка
 app.json.ensure_ascii = False
 

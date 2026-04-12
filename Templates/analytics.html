@@ -7,21 +7,109 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/css/analytics.css">
+    <!-- heatmap.js Library - загружаем СИНХРОННО, чтобы h337 был доступен -->
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+    <!-- PDF export libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-white text-gray-900">
     <div class="flex h-screen">
-        <!-- Боковое меню -->
-        <div class="w-64 bg-white border-r border-gray-200 p-6 shadow-sm">
-            <h2 class="text-2xl font-bold mb-8 text-red-600">Аналитика</h2>
-            <nav class="space-y-2">
+        <!-- Кнопка открытия сайдбара (скрытая, используется inline кнопка) -->
+        <button id="sidebar-open-btn" onclick="toggleSidebar(true)" class="hidden"></button>
+
+        <!-- Боковое меню (выезжающее) -->
+        <div id="sidebar"
+             class="w-64 bg-white border-r border-gray-200 p-6 shadow-sm flex flex-col transition-all duration-300 ease-in-out fixed h-full z-40"
+             style="left: 0;">
+            <!-- Шапка сайдбара -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold" style="color: #e30613;">Аналитика</h2>
+                <button onclick="toggleSidebar(false)" class="p-1 rounded hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Кнопка назад -->
+            <a href="/dashboard" class="flex items-center gap-2 px-4 py-2 rounded-lg mb-4 text-sm font-medium transition-colors hover:bg-gray-50"
+               style="color: #6b7280; border: 1px solid #e5e7eb;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                К панели управления
+            </a>
+
+            <!-- Название сайта -->
+            {% if site %}
+            <div class="mb-4 p-3 rounded-lg" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                <p class="text-xs font-medium" style="color: #6b7280;">Сайт</p>
+                <p class="text-sm font-semibold mt-0.5" style="color: #1f2937;">{{ site.name }}</p>
+                <p class="text-xs mt-0.5" style="color: #9ca3af;">{{ site.domain }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Выбор ревизии -->
+            {% if site %}
+            <div class="mb-6">
+                <label class="block text-xs font-medium mb-1.5" style="color: #6b7280;">Ревизия</label>
+                <select id="revision-select" onchange="onRevisionChange()"
+                        class="w-full px-3 py-2 rounded-lg border text-sm"
+                        style="border-color: #d1d5db; color: #1f2937; background: #f9fafb;">
+                    <option value="">Все ревизии</option>
+                    {% for rev in site.revisions|sort(attribute='created_at', reverse=true) %}
+                    <option value="{{ rev.id }}" {% if rev.is_active %}selected{% endif %}>
+                        {{ rev.name }}{% if rev.is_active %} (активная){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- Навигация -->
+            <nav class="space-y-2 flex-1">
                 <a class="nav-item active block px-4 py-2 rounded hover:bg-gray-50" data-view="overview" onclick="changeView('overview')">Обзор</a>
                 <a class="nav-item block px-4 py-2 rounded hover:bg-gray-50" data-view="heatmap" onclick="changeView('heatmap')">Тепловая карта</a>
                 <a class="nav-item block px-4 py-2 rounded hover:bg-gray-50" data-view="sessions" onclick="changeView('sessions')">Сессии</a>
+                <a class="nav-item block px-4 py-2 rounded hover:bg-gray-50" data-view="comparison" onclick="changeView('comparison')">Сравнение ревизий</a>
+                <a class="nav-item block px-4 py-2 rounded hover:bg-gray-50" data-view="insights" onclick="changeView('insights')">Гипотезы и советы</a>
             </nav>
+
+            <!-- Выход -->
+            <div class="pt-4 border-t" style="border-color: #e5e7eb;">
+                <a href="/logout" class="block text-center px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-red-50"
+                   style="color: #e30613;">
+                    Выйти
+                </a>
+            </div>
         </div>
 
         <!-- Основное содержимое -->
-        <div class="flex-1 overflow-auto p-6">
+        <div id="main-content" class="flex-1 overflow-auto p-6 transition-all duration-300 ease-in-out" style="margin-left: 256px;">
+            
+            <!-- Верхняя панель (кнопка меню + экспорт) -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <button id="sidebar-inline-btn"
+                            onclick="toggleSidebar(true)"
+                            class="hidden p-2 rounded-lg bg-white border shadow-sm hover:bg-gray-50 transition-all"
+                            style="border-color: #e5e7eb;">
+                        <svg class="w-5 h-5" style="color: #e30613;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+                <button onclick="exportPDF()"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                        style="border-color: #d1d5db; color: #374151;">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Экспорт PDF
+                </button>
+            </div>
+
             <!-- ===== OVERVIEW ===== -->
             <div data-view-content="overview" style="display: block;">
                 <!-- Заголовок -->
@@ -53,7 +141,7 @@
                     </div>
                     <div class="card metric">
                         <div class="metric-value" id="bounce-rate">-</div>
-                        <div class="metric-label">Bounce Rate %</div>
+                        <div class="metric-label">Показатель отказов %</div>
                     </div>
                     <div class="card metric">
                         <div class="metric-value" id="avg-duration">-</div>
@@ -109,7 +197,7 @@
                                     <th class="text-left py-2 px-2">Устройство</th>
                                     <th class="text-left py-2 px-2">Страницы</th>
                                     <th class="text-left py-2 px-2">Время (сек)</th>
-                                    <th class="text-left py-2 px-2">Bounce</th>
+                                    <th class="text-left py-2 px-2">Отказ</th>
                                     <th class="text-left py-2 px-2">Источник</th>
                                     <th class="text-left py-2 px-2">Время</th>
                                 </tr>
@@ -122,69 +210,131 @@
                 </div>
             </div>
 
-            <!-- ===== HEATMAP ===== -->
-            <div data-view-content="heatmap" style="display: none;">
-                <div class="mb-8">
-                    <h1 class="text-4xl font-bold text-gray-900">Карта кликов на странице</h1>
-                    <p class="text-gray-600 mt-2">Интенсивность кликов по секциям сайта</p>
-                </div>
-
-                <div class="mb-8 flex gap-2" id="period-buttons-heatmap">
-                    <button id="period-7-hm" onclick="changePeriod(7)" class="period-btn-hm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">7 дней</button>
-                    <button id="period-30-hm" onclick="changePeriod(30)" class="period-btn-hm bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded">30 дней</button>
-                    <button id="period-90-hm" onclick="changePeriod(90)" class="period-btn-hm bg-gray-300 hover:bg-gray-400 text-gray-900 px-4 py-2 rounded">90 дней</button>
-                </div>
-
-                <!-- Легенда -->
-                <div class="card mb-8">
-                    <div class="flex items-center gap-6 justify-center flex-wrap">
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded" style="background: rgba(220, 38, 38, 0.15);"></div>
-                            <span class="text-sm">Низкая активность</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded" style="background: rgba(220, 38, 38, 0.35);"></div>
-                            <span class="text-sm">Средняя активность</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded" style="background: rgba(220, 38, 38, 0.65);"></div>
-                            <span class="text-sm">Высокая активность</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded" style="background: rgba(220, 38, 38, 1);"></div>
-                            <span class="text-sm">Очень высокая</span>
-                        </div>
+            <!-- ===== HEATMAP КЛИКОВ ===== -->
+            <div id="heatmap-tab" data-view-content="heatmap" class="hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Тепловая карта кликов</h1>
+                        <p class="text-gray-600 mt-2">Визуализация активности пользователей на странице</p>
                     </div>
                 </div>
 
-                <!-- Превью страницы с тепловой картой -->
-                <div class="card mb-8">
-                    <h3 class="text-xl font-bold mb-4">Предпросмотр сайта</h3>
-                    <div class="bg-gradient-to-b from-blue-900 to-gray-800 rounded-lg overflow-hidden" style="max-height: 800px;">
-                        <div id="heatmap-preview" class="relative w-full bg-white" style="min-height: 400px; background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2070'); background-size: cover; background-position: center;">
-                            <!-- Тепловые слои будут добавлены JS -->
+                <!-- Управление параметрами -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Выбор страницы -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Страница анализа
+                            </label>
+                            <select id="heatmap-url-select" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                    onchange="heatmapOnUrlChange()">
+                                <option value="/">Главная страница</option>
+                            </select>
                         </div>
+
+                        <!-- Выбор периода -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Период
+                            </label>
+                            <select id="heatmap-days-select" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                    onchange="heatmapRefresh()">
+                                <option value="7">7 дней</option>
+                                <option value="30">30 дней</option>
+                                <option value="90" selected>90 дней</option>
+                            </select>
+                        </div>
+
+                        <!-- Кнопка обновления -->
+                        <div class="flex items-end">
+                            <button onclick="heatmapRefresh()" 
+                                    class="w-full bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition">
+                                Обновить карту
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Подсказка -->
+                    <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                        <p class="text-sm text-blue-900">
+                            <strong>Как читать карту:</strong> 
+                            Красные зоны = высокая активность кликов, синие = низкая. 
+                            Размер и интенсивность показывают концентрацию кликов.
+                        </p>
                     </div>
                 </div>
 
-                <!-- Таблица детальной статистики -->
-                <div class="card">
-                    <h3 class="text-xl font-bold mb-4">Статистика по секциям</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="border-b border-gray-200">
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Секция</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Просмотры</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Клики</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-900">CTR %</th>
-                                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Интенсивность</th>
-                                </tr>
-                            </thead>
-                            <tbody id="heatmap-table">
-                                <tr><td colspan="5" class="py-4 text-center text-gray-500">Загрузка...</td></tr>
-                            </tbody>
-                        </table>
+                <!-- Основной контейнер тепловой карты -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Визуальная карта активности</h2>
+
+                    <!-- Внешний контейнер фиксированной высоты (для overlays) -->
+                    <div id="heatmap-container" 
+                        class="relative bg-gray-100 rounded-lg border-2 border-gray-300"
+                        style="height: 700px;">
+
+                        <!-- Прокручиваемая область — вся страница видна при прокрутке -->
+                        <div id="heatmap-scroll" 
+                             style="width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden;">
+                            
+                            <!-- Внутренний контейнер: высота = полная высота страницы, h337 рендерит тут -->
+                            <div id="heatmap-inner" style="position: relative; width: 100%;">
+                                <iframe id="heatmap-iframe" 
+                                        src="/" 
+                                        style="width: 100%; border: none; display: block; pointer-events: none;"
+                                        sandbox="allow-same-origin allow-scripts"
+                                        title="Page preview for heatmap"></iframe>
+                            </div>
+                        </div>
+
+                        <!-- Индикатор загрузки (поверх всего) -->
+                        <div id="heatmap-loading" 
+                            class="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center"
+                            style="display: none; z-index: 20;">
+                            <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-300 border-t-red-600 mb-4"></div>
+                            <p class="text-gray-700 font-medium">Загрузка тепловой карты...</p>
+                            <p class="text-gray-500 text-sm mt-1">Это может занять несколько секунд</p>
+                        </div>
+
+                        <!-- Сообщение "нет данных" -->
+                        <div id="heatmap-nodata" 
+                            class="absolute inset-0 flex items-center justify-center bg-black/30"
+                            style="display: none; z-index: 15;">
+                            <div class="bg-white rounded-lg p-6 shadow-lg text-center">
+                                <p class="text-gray-700 text-lg"> Нет данных кликов для выбранного периода</p>
+                                <p class="text-gray-500 text-sm mt-2">Попробуйте увеличить период или проверить URL</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Статистика кликов -->
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                            <div class="text-2xl font-bold text-red-700" id="heatmap-total-clicks">0</div>
+                            <div class="text-sm text-red-600 mt-1">Всего кликов</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                            <div class="text-2xl font-bold text-blue-700" id="heatmap-unique-points">0</div>
+                            <div class="text-sm text-blue-600 mt-1">Уникальных зон</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                            <div class="text-2xl font-bold text-purple-700" id="heatmap-period-days">90</div>
+                            <div class="text-sm text-purple-600 mt-1">Дней анализа</div>
+                        </div>
+                    </div>
+
+                    <!-- Легенда градиента -->
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Легенда интенсивности:</p>
+                        <div class="flex items-center gap-2 text-xs">
+                            <div class="w-10 h-4 rounded" style="background: linear-gradient(90deg, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF8800, #FF0000)"></div>
+                            <span class="text-gray-600">Низкая</span>
+                            <span class="text-gray-900 font-bold">←→</span>
+                            <span class="text-gray-600">Высокая активность</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -222,11 +372,11 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm text-gray-700 mb-2 font-medium">Bounce Status</label>
+                            <label class="block text-sm text-gray-700 mb-2 font-medium">Статус отказа</label>
                             <select id="filter-bounce" class="w-full bg-gray-50 rounded px-3 py-2 border border-gray-300" onchange="loadSessionsData()">
                                 <option value="all">Все</option>
-                                <option value="true">Bounce</option>
-                                <option value="false">Conv</option>
+                                <option value="true">Отказ</option>
+                                <option value="false">Целевой</option>
                             </select>
                         </div>
 
@@ -260,6 +410,45 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ===== СРАВНЕНИЕ РЕВИЗИЙ ===== -->
+            <div data-view-content="comparison" style="display: none;">
+                <div class="mb-8">
+                    <h1 class="text-4xl font-bold text-gray-900">Сравнение ревизий</h1>
+                    <p class="text-gray-600 mt-2">Сравнение ключевых метрик между различными версиями сайта</p>
+                </div>
+
+                <div id="comparison-content">
+                    <div class="card mb-6">
+                        <div class="text-center py-8 text-gray-500">
+                            <p>Загрузка данных сравнения...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ГИПОТЕЗЫ И СОВЕТЫ ===== -->
+            <div data-view-content="insights" style="display: none;">
+                <div class="mb-8 flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-900">Гипотезы и рекомендации</h1>
+                        <p class="text-gray-600 mt-2">Автоматический анализ данных и проверка гипотез о поведении пользователей</p>
+                    </div>
+                    <button onclick="openHypothesisModal()" class="flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors" style="background:#e30613;" onmouseover="this.style.background='#c30510'" onmouseout="this.style.background='#e30613'">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Создать гипотезу
+                    </button>
+                </div>
+
+                <div id="insights-content">
+                    <div class="card mb-6">
+                        <div class="text-center py-8 text-gray-500">
+                            <p>Загрузка анализа...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -274,6 +463,276 @@
         </div>
     </div>
 
+    <!-- Модальное окно создания гипотезы -->
+    <div id="hypothesis-modal" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" style="display: none;" onclick="if (event.target.id === 'hypothesis-modal') closeHypothesisModal()">
+        <div class="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-gray-900">Новая гипотеза</h2>
+                <button onclick="closeHypothesisModal()" class="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                    <input id="hyp-title" type="text" placeholder="Мобильные конвертируются хуже" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Формулировка гипотезы</label>
+                    <input id="hyp-text" type="text" placeholder="Мобильные пользователи имеют выше показатель отказов" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+                        <select id="hyp-category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="engagement">Вовлечённость</option>
+                            <option value="ux">UX / Интерфейс</option>
+                            <option value="traffic">Трафик</option>
+                            <option value="retention">Возвращаемость</option>
+                            <option value="conversion">Конверсия</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Метрика</label>
+                        <select id="hyp-metric" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="bounce_rate">Показатель отказов (%)</option>
+                            <option value="conversion">Конверсия (%)</option>
+                            <option value="avg_duration">Ср. длительность (сек)</option>
+                            <option value="avg_pages">Ср. страниц</option>
+                            <option value="sessions">Сессии</option>
+                            <option value="cta_clicks">CTA-клики</option>
+                            <option value="rage_click_pct">Rage-клики (%)</option>
+                            <option value="avg_clicks">Ср. кликов/сессия</option>
+                        </select>
+                    </div>
+                </div>
+                <fieldset class="border border-gray-200 rounded-lg p-3">
+                    <legend class="text-sm font-medium text-gray-600 px-1">Сегмент A (основной)</legend>
+                    <div class="grid grid-cols-3 gap-2">
+                        <select id="hyp-seg-a-field" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="device_type">Устройство</option>
+                            <option value="utm_source">UTM Source</option>
+                            <option value="utm_medium">UTM Medium</option>
+                            <option value="utm_campaign">UTM Campaign</option>
+                            <option value="is_bounce">Отказ</option>
+                            <option value="visitor_type">Тип визита</option>
+                            <option value="sections_viewed">Кол-во секций</option>
+                        </select>
+                        <select id="hyp-seg-a-op" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="==">=</option>
+                            <option value="!=">!=</option>
+                            <option value=">=">&ge;</option>
+                            <option value="<=">&le;</option>
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                        </select>
+                        <input id="hyp-seg-a-value" type="text" placeholder="mobile" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                    </div>
+                </fieldset>
+                <fieldset class="border border-gray-200 rounded-lg p-3">
+                    <legend class="text-sm font-medium text-gray-600 px-1">Сегмент B (сравнение, пусто = все остальные)</legend>
+                    <div class="grid grid-cols-3 gap-2">
+                        <select id="hyp-seg-b-field" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="">Все остальные</option>
+                            <option value="device_type">Устройство</option>
+                            <option value="utm_source">UTM Source</option>
+                            <option value="utm_medium">UTM Medium</option>
+                            <option value="utm_campaign">UTM Campaign</option>
+                            <option value="is_bounce">Отказ</option>
+                            <option value="visitor_type">Тип визита</option>
+                            <option value="sections_viewed">Кол-во секций</option>
+                        </select>
+                        <select id="hyp-seg-b-op" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="==">=</option>
+                            <option value="!=">!=</option>
+                            <option value=">=">&ge;</option>
+                            <option value="<=">&le;</option>
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                        </select>
+                        <input id="hyp-seg-b-value" type="text" placeholder="desktop" class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                    </div>
+                </fieldset>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Режим</label>
+                        <select id="hyp-compare-mode" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                            <option value="ratio">Соотношение (A/B)</option>
+                            <option value="ratio_inverse">Обратное (B/A)</option>
+                            <option value="diff">Разница (A-B)</option>
+                            <option value="abs">Абсолют (A)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Порог (да)</label>
+                        <input id="hyp-thresh-conf" type="number" value="1.5" step="0.1" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Порог (частично)</label>
+                        <input id="hyp-thresh-part" type="number" value="1.2" step="0.1" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Совет при подтверждении</label>
+                    <input id="hyp-advice-yes" type="text" placeholder="Рекомендуемое действие..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Совет если не подтверждена</label>
+                    <input id="hyp-advice-no" type="text" placeholder="Альтернативная рекомендация..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-200">
+                </div>
+                <div id="hyp-error" class="hidden text-sm text-red-600"></div>
+                <button onclick="submitHypothesis()" class="w-full text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors" style="background:#e30613;" onmouseover="this.style.background='#c30510'" onmouseout="this.style.background='#e30613'">
+                    Создать и проверить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === Sidebar toggle ===
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            const inlineBtn = document.getElementById('sidebar-inline-btn');
+            if (show) {
+                sidebar.style.left = '0px';
+                main.style.marginLeft = '256px';
+                if (inlineBtn) inlineBtn.classList.add('hidden');
+            } else {
+                sidebar.style.left = '-256px';
+                main.style.marginLeft = '0px';
+                if (inlineBtn) inlineBtn.classList.remove('hidden');
+            }
+        }
+
+        // === Site/Revision context ===
+        const SITE_ID = '{{ site.id if site else "" }}';
+        let REVISION_ID = document.getElementById('revision-select')
+            ? document.getElementById('revision-select').value
+            : '';
+
+        function onRevisionChange() {
+            REVISION_ID = document.getElementById('revision-select').value;
+            // Перезагрузить текущий вид
+            if (typeof changeView === 'function') {
+                changeView(currentView || 'overview');
+            }
+        }
+
+        function siteParams(extra) {
+            const params = new URLSearchParams(extra || '');
+            if (SITE_ID) params.set('site_id', SITE_ID);
+            if (REVISION_ID) params.set('revision_id', REVISION_ID);
+            return params.toString();
+        }
+
+        // === PDF Export ===
+        async function exportPDF() {
+            const btn = document.querySelector('[onclick="exportPDF()"]');
+            const origText = btn.textContent;
+            btn.textContent = 'Генерация…';
+            btn.disabled = true;
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('l', 'mm', 'a4');  // landscape для компактности
+                const pageW = pdf.internal.pageSize.getWidth();
+                const pageH = pdf.internal.pageSize.getHeight();
+                const margin = 8;
+
+                // Найти видимую вкладку
+                const allViews = document.querySelectorAll('[data-view-content]');
+                let visibleView = null;
+                allViews.forEach(v => {
+                    if (v.style.display !== 'none' && !v.classList.contains('hidden')) {
+                        visibleView = v;
+                    }
+                });
+                if (!visibleView) {
+                    alert('Нет данных для экспорта');
+                    return;
+                }
+
+                // Создаём offscreen-контейнер с фиксированной шириной,
+                // чтобы grid-раскладка сохранилась при рендере
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'position:absolute;top:-99999px;left:0;width:1200px;background:#fff;padding:24px;font-family:Inter,sans-serif;';
+
+                // Заголовок
+                const header = document.createElement('div');
+                header.style.cssText = 'margin-bottom:16px;';
+                const revSelect = document.getElementById('revision-select');
+                const revName = revSelect ? revSelect.options[revSelect.selectedIndex].text.trim() : 'Все ревизии';
+                header.innerHTML = `
+                    <div style="font-size:22px;font-weight:700;color:#111;">{{ site.name if site else "Аналитика" }}</div>
+                    <div style="font-size:12px;color:#666;margin-top:2px;">Ревизия: ${revName} | Дата: ${new Date().toLocaleDateString('ru-RU')}</div>
+                `;
+                wrapper.appendChild(header);
+
+                // Клонируем содержимое вкладки
+                const clone = visibleView.cloneNode(true);
+                // Убираем кнопки периода из клона
+                clone.querySelectorAll('[id^="period-buttons"]').forEach(el => el.remove());
+                // Убираем скрытые элементы и hidden
+                clone.querySelectorAll('.hidden').forEach(el => el.remove());
+                clone.style.display = 'block';
+
+                // Заменяем canvas-графики на статичные img в клоне
+                const origCanvases = visibleView.querySelectorAll('canvas');
+                const cloneCanvases = clone.querySelectorAll('canvas');
+                cloneCanvases.forEach((cc, i) => {
+                    const orig = origCanvases[i];
+                    if (orig && orig.width > 0) {
+                        const img = document.createElement('img');
+                        img.src = orig.toDataURL('image/png');
+                        img.style.width = '100%';
+                        img.style.height = 'auto';
+                        cc.parentNode.replaceChild(img, cc);
+                    }
+                });
+
+                wrapper.appendChild(clone);
+
+                document.body.appendChild(wrapper);
+
+                // Рендерим целиком — grid/flex сохраняется
+                const fullCanvas = await html2canvas(wrapper, {
+                    scale: 1.5,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    width: 1200
+                });
+                document.body.removeChild(wrapper);
+
+                // Нарезаем на страницы
+                const imgW = pageW - margin * 2;
+                const ratio = imgW / fullCanvas.width;
+                const sliceHeightPx = (pageH - margin * 2) / ratio;
+
+                let srcY = 0;
+                while (srcY < fullCanvas.height) {
+                    if (srcY > 0) pdf.addPage();
+
+                    const h = Math.min(sliceHeightPx, fullCanvas.height - srcY);
+                    const sliceCanvas = document.createElement('canvas');
+                    sliceCanvas.width = fullCanvas.width;
+                    sliceCanvas.height = h;
+                    sliceCanvas.getContext('2d').drawImage(fullCanvas, 0, srcY, fullCanvas.width, h, 0, 0, fullCanvas.width, h);
+
+                    const imgH = h * ratio;
+                    pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, margin, imgW, imgH);
+                    srcY += h;
+                }
+
+                pdf.save('analytics_{{ site.id if site else "report" }}.pdf');
+            } catch (e) {
+                console.error('PDF export error:', e);
+                alert('Ошибка при генерации PDF');
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+    </script>
     <script src="/static/js/analytics.js"></script>
 </body>
 </html>

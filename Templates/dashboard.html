@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления — Аналитика</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/analytics.css">
+</head>
+<body style="background: #f8f9fa;">
+    <!-- Header -->
+    <header class="border-b" style="background: #ffffff; border-color: #e5e7eb;">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: rgba(227, 6, 19, 0.1);">
+                    <svg class="w-5 h-5" style="color: #e30613;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <span class="text-lg font-semibold" style="color: #1f2937;">Веб-аналитика</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm" style="color: #6b7280;">{{ user.name }}</span>
+                <a href="/logout" class="text-sm font-medium hover:underline" style="color: #e30613;">Выйти</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Page title -->
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold" style="color: #1f2937;">Мои сайты</h1>
+            <button onclick="document.getElementById('addSiteModal').classList.remove('hidden')"
+                    class="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                    style="background: #e30613;">
+                + Добавить сайт
+            </button>
+        </div>
+
+        <!-- Sites list -->
+        {% set sites_list = user.sites|list %}
+        {% if sites_list|length == 0 %}
+        <div class="card text-center py-12">
+            <svg class="w-16 h-16 mx-auto mb-4" style="color: #d1d5db;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+            </svg>
+            <p class="text-lg font-medium mb-2" style="color: #374151;">Нет добавленных сайтов</p>
+            <p class="text-sm mb-6" style="color: #6b7280;">Добавьте свой первый сайт для начала сбора аналитики</p>
+            <button onclick="document.getElementById('addSiteModal').classList.remove('hidden')"
+                    class="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                    style="background: #e30613;">
+                + Добавить сайт
+            </button>
+        </div>
+        {% else %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for site in sites_list %}
+            <div class="card">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="font-semibold text-base" style="color: #1f2937;">{{ site.name }}</h3>
+                        <p class="text-sm mt-1" style="color: #6b7280;">{{ site.domain }}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if site.is_active %}bg-green-50 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                        {{ 'Активен' if site.is_active else 'Неактивен' }}
+                    </span>
+                </div>
+
+                <!-- Active revision -->
+                {% set active_revision = site.revisions|selectattr('is_active')|first %}
+                {% if active_revision %}
+                <div class="mb-4 p-3 rounded-lg" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                    <p class="text-xs font-medium" style="color: #6b7280;">Текущая ревизия</p>
+                    <p class="text-sm font-medium mt-1" style="color: #1f2937;">{{ active_revision.name }}</p>
+                </div>
+                {% endif %}
+
+                <div class="flex gap-2 mt-4">
+                    <a href="/analytics/{{ site.id }}"
+                       class="flex-1 text-center px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-90 text-white"
+                       style="background: #e30613;">
+                        Аналитика
+                    </a>
+                    <button onclick="showCode('{{ site.site_key }}')"
+                            class="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                            style="border-color: #d1d5db; color: #374151;">
+                        Код
+                    </button>
+                    <button onclick="showRevisions('{{ site.id }}', '{{ site.name }}')"
+                            class="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                            style="border-color: #d1d5db; color: #374151;">
+                        Ревизии
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Add Site Modal -->
+    <div id="addSiteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.4);">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h2 class="text-lg font-semibold mb-4" style="color: #1f2937;">Добавить сайт</h2>
+            <form method="POST" action="/api/sites" id="addSiteForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1.5" style="color: #374151;">Название</label>
+                    <input type="text" name="name" required
+                           class="w-full px-4 py-2.5 rounded-lg border text-sm"
+                           style="border-color: #d1d5db; color: #1f2937; background: #f9fafb;"
+                           placeholder="Мой сайт">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1.5" style="color: #374151;">Домен</label>
+                    <input type="text" name="domain" required
+                           class="w-full px-4 py-2.5 rounded-lg border text-sm"
+                           style="border-color: #d1d5db; color: #1f2937; background: #f9fafb;"
+                           placeholder="example.com">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('addSiteModal').classList.add('hidden')"
+                            class="flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                            style="border-color: #d1d5db; color: #374151;">
+                        Отмена
+                    </button>
+                    <button type="submit"
+                            class="flex-1 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                            style="background: #e30613;">
+                        Добавить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tracking Code Modal -->
+    <div id="codeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.4);">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-lg font-semibold mb-4" style="color: #1f2937;">Инструкция по установке</h2>
+            
+            <!-- Шаг 1 -->
+            <div class="mb-5">
+                <h3 class="text-sm font-semibold mb-2" style="color: #374151;">1. Подключите скрипт</h3>
+                <p class="text-xs mb-2" style="color: #6b7280;">Вставьте перед закрывающим тегом &lt;/body&gt;:</p>
+                <pre id="trackingCode" class="p-3 rounded-lg text-xs overflow-x-auto" style="background: #1f2937; color: #e5e7eb;"></pre>
+            </div>
+
+            <!-- Шаг 2 -->
+            <div class="mb-5">
+                <h3 class="text-sm font-semibold mb-2" style="color: #374151;">2. Разметьте секции для отслеживания просмотров</h3>
+                <p class="text-xs mb-2" style="color: #6b7280;">Добавьте атрибуты <code class="bg-gray-100 px-1 rounded">data-track</code> к секциям страницы:</p>
+                <pre class="p-3 rounded-lg text-xs overflow-x-auto" style="background: #1f2937; color: #e5e7eb;">&lt;section data-track="section" data-track-name="hero"&gt;
+  ...контент секции...
+&lt;/section&gt;</pre>
+            </div>
+
+            <!-- Шаг 3 -->
+            <div class="mb-5">
+                <h3 class="text-sm font-semibold mb-2" style="color: #374151;">3. Разметьте кнопки/ссылки для событий кликов</h3>
+                <pre class="p-3 rounded-lg text-xs overflow-x-auto" style="background: #1f2937; color: #e5e7eb;">&lt;button data-track="click"
+        data-track-event="cta_click"
+        data-track-name="hero_cta"&gt;
+  Купить сейчас
+&lt;/button&gt;</pre>
+            </div>
+
+            <!-- Шаг 4 -->
+            <div class="mb-5">
+                <h3 class="text-sm font-semibold mb-2" style="color: #374151;">4. Разметьте формы</h3>
+                <pre class="p-3 rounded-lg text-xs overflow-x-auto" style="background: #1f2937; color: #e5e7eb;">&lt;form data-track="form"
+      data-track-event="form_submit"
+      data-track-name="booking_form"&gt;
+  ...поля формы...
+&lt;/form&gt;</pre>
+            </div>
+
+            <!-- Примечание -->
+            <div class="p-3 rounded-lg mb-4" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <p class="text-xs" style="color: #1e40af;">
+                    <strong>Примечание:</strong> Тепловая карта кликов собирается автоматически для всех кликов на странице. 
+                    Атрибуты <code class="bg-blue-100 px-1 rounded">data-track</code> нужны для именованных событий и секций.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="copyCode()" class="flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                        style="border-color: #d1d5db; color: #374151;">
+                    Скопировать код
+                </button>
+                <button onclick="document.getElementById('codeModal').classList.add('hidden')"
+                        class="flex-1 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                        style="background: #e30613;">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revisions Modal -->
+    <div id="revisionsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(0,0,0,0.4);">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold" style="color: #1f2937;">Ревизии: <span id="revSiteName"></span></h2>
+            </div>
+            <div id="revisionsList" class="space-y-3 mb-4 max-h-64 overflow-y-auto"></div>
+
+            <!-- New revision form -->
+            <div class="border-t pt-4 mt-4" style="border-color: #e5e7eb;">
+                <h3 class="text-sm font-medium mb-3" style="color: #374151;">Создать новую ревизию</h3>
+                <form id="newRevisionForm" class="space-y-3">
+                    <input type="hidden" id="revSiteId" name="site_id">
+                    <input type="text" name="rev_name" required
+                           class="w-full px-4 py-2 rounded-lg border text-sm"
+                           style="border-color: #d1d5db; color: #1f2937; background: #f9fafb;"
+                           placeholder="Название ревизии (напр. v2.0)">
+                    <input type="text" name="rev_description"
+                           class="w-full px-4 py-2 rounded-lg border text-sm"
+                           style="border-color: #d1d5db; color: #1f2937; background: #f9fafb;"
+                           placeholder="Описание (необязательно)">
+                    <button type="submit"
+                            class="w-full py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                            style="background: #e30613;">
+                        Создать ревизию
+                    </button>
+                </form>
+            </div>
+
+            <button onclick="document.getElementById('revisionsModal').classList.add('hidden')"
+                    class="w-full mt-4 py-2.5 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50"
+                    style="border-color: #d1d5db; color: #374151;">
+                Закрыть
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Add site form
+        document.getElementById('addSiteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const res = await fetch('/api/sites', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: data.get('name'), domain: data.get('domain')})
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.message || 'Ошибка при добавлении сайта');
+            }
+        });
+
+        function showCode(siteKey) {
+            const code = `<script src="${window.location.origin}/static/js/tracking-main.js" data-auto-init data-site-key="${siteKey}"><\/script>`;
+            document.getElementById('trackingCode').textContent = code;
+            document.getElementById('codeModal').classList.remove('hidden');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('trackingCode').textContent;
+            navigator.clipboard.writeText(code);
+        }
+
+        async function showRevisions(siteId, siteName) {
+            document.getElementById('revSiteName').textContent = siteName;
+            document.getElementById('revSiteId').value = siteId;
+            document.getElementById('revisionsModal').classList.remove('hidden');
+
+            const res = await fetch(`/api/sites/${siteId}/revisions`);
+            const revisions = await res.json();
+            const list = document.getElementById('revisionsList');
+            
+            if (revisions.length === 0) {
+                list.innerHTML = '<p class="text-sm text-center py-4" style="color: #6b7280;">Нет ревизий</p>';
+            } else {
+                list.innerHTML = revisions.map(r => `
+                    <div class="p-3 rounded-lg flex items-center justify-between" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                        <div>
+                            <p class="text-sm font-medium" style="color: #1f2937;">${r.name}</p>
+                            <p class="text-xs mt-0.5" style="color: #6b7280;">${r.description || ''} · ${new Date(r.created_at).toLocaleDateString('ru')}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${r.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                            ${r.is_active ? 'Активна' : 'Завершена'}
+                        </span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // New revision form
+        document.getElementById('newRevisionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const siteId = data.get('site_id');
+            const res = await fetch(`/api/sites/${siteId}/revisions`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: data.get('rev_name'), description: data.get('rev_description')})
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.message || 'Ошибка при создании ревизии');
+            }
+        });
+
+        // Close modals on backdrop click
+        ['addSiteModal', 'codeModal', 'revisionsModal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

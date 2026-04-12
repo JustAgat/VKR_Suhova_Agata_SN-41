@@ -16,6 +16,8 @@ DATABASE_URL = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NA
 class Config:
     """Базовая конфигурация приложения"""
     
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    
     # Основная конфигурация БД
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     
